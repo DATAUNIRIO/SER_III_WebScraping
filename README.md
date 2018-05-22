@@ -1,4 +1,4 @@
-# SER_III_WebScraping
+# III SER - WebScraping
 
 Minicurso de Webscraping com pacote Rvest
 
@@ -12,14 +12,14 @@ Website: https://ser2018.weebly.com/programmee.html
 
 ## Principais
 
-library(tidyverse)
+library(tidyverse)  
 library(Rvest)
 
 ## Auxiliares
 
-library(ggplot2)
-library(tm)
-library(wordcloud)
+library(ggplot2)  
+library(tm)  
+library(wordcloud)  
 
 # Páginas "scrapeadas" durante o curso
 
