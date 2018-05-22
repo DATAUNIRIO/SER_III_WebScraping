@@ -39,6 +39,17 @@ library(wordcloud)
 
 - https://www.deviantart.com/
 
+# Páginas úteis
+
+## Seletores de CSS
+
+- https://www.w3schools.com/cssref/css_selectors.asp
+
+## Xpath
+
+- https://www.w3schools.com/xml/xpath_syntax.asp
+
+
 # Welcome R version 3.5.0 (Joy in Playing)
 
 <p align="center">
