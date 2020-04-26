@@ -1,3 +1,15 @@
+# Novos links e pacotes
+### Tutorial: Web Scraping in R with rvest
+https://www.dataquest.io/blog/web-scraping-in-r-rvest/
+### The goal of ralger is to facilitate web scraping in R.
+https://github.com/feddelegrand7/ralger/blob/master/README.md
+### Web crawling with R part 1: Teaching rvest how to crawl
+https://stefan-stein.github.io/posts/2020-01-09-webcrawling1/
+### Scraping the Web with rvest
+https://jarrodpelkofer.netlify.app/posts/rvest_web_scrape/
+### Web Scraping with rvest + Astro Throwback
+https://heads0rtai1s.github.io/2020/01/23/rvest-intro-astro/
+
 # III SER - WebScraping
 
 Minicurso de Webscraping com pacote Rvest
