@@ -1,6 +1,8 @@
 # Novos links e pacotes
 ### Tutorial: Web Scraping in R with rvest
 https://www.dataquest.io/blog/web-scraping-in-r-rvest/
+### Webscraping with R - TABLES
+https://r-tastic.co.uk/post/from-messy-to-tidy/
 ### The goal of ralger is to facilitate web scraping in R.
 https://github.com/feddelegrand7/ralger/blob/master/README.md
 ### Web crawling with R part 1: Teaching rvest how to crawl
