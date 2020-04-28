@@ -1,3 +1,16 @@
+# Função xmlToList do pacote XML
+tt = 
+  '<x>
+     <a>text</a>
+     <b foo="1"/>
+     <c bar="me">
+        <d>a phrase</d>
+     </c>
+  </x>'
+xml_data <- XML::xmlToList(XML::xmlParse(tt, encoding = 'UTF-8'))
+
+
+
 # Novos links e pacotes
 ### Tutorial: Web Scraping in R with rvest
 https://www.dataquest.io/blog/web-scraping-in-r-rvest/
