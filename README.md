@@ -6,7 +6,8 @@ tt =
      <c bar="me">
         <d>a phrase</d>
      </c>
-  </x>'
+  </x>'  
+  
 xml_data <- XML::xmlToList(XML::xmlParse(tt, encoding = 'UTF-8'))
 
 
