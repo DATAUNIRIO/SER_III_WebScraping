@@ -1,0 +1,261 @@
+---
+title: '#TidyTuesday Video'
+author: "Tom"
+date: "April 16, 2018"
+output: html_document
+---
+
+# CODE SOURCED FROM JAKE KAUPP #
+http://www.jakekaupp.com/post/tidytuesday-the-lonesome-kicker/
+
+# Load libraries
+
+* Tidyverse for all the core tidy packages
+* rvest to "harvest" all the data from the web
+
+```{r, message = F}
+library(tidyverse) # ggplot, dplyr, tidyr, readr, purrr, tibble, stringr, forcats
+library(rvest) # interacting with html and webcontent
+library(glue) # used to combine strings in clever ways
+```
+
+## Data Sourcing
+
+We want to source NFL positional salaries to match the 
+[538 article](https://fivethirtyeight.com/features/running-backs-are-finally-getting-paid-what-theyre-worth/).
+
+We dont have access to NFL salaries from ESPN, so we have to find it manually at sportrac.
+
+```{r}
+url <- "http://www.spotrac.com/nfl/positional/2011/quarterback/"
+
+
+read_html(url) %>% 
+  html_nodes("table") %>% 
+  html_table()
+  
+```
+
+
+## Finding the specific table path
+* Inspect the web page to find what the path is
+
+```{r}
+read_html(url) %>%
+        html_nodes("#main > div.teams > table:nth-child(6)") %>% 
+        html_table()
+        
+
+```
+
+
+## Save as a dataframe
+
+* Read html from the url, aim html_table() at the path and save to dataframe
+
+```{r}
+qb_2011 <- read_html(url) %>%
+              html_node("#main > div.teams > table:nth-child(6)") %>% 
+              html_table()
+
+# take a peek at the data
+glimpse(qb_2011)
+
+# how many dataframes?
+8 * 10
+```
+
+## Let's build a web scraping function!
+
+```{r}
+url <- "http://www.spotrac.com/nfl/positional/2011/quarterback/"
+
+# things we want to change = year and position
+
+base_url <- "http://www.spotrac.com/nfl/positional/"
+
+salary_scrape <- function(year, position) {
+    
+    url <- glue("http://www.spotrac.com/nfl/positional/{year}/{position}")
+    
+    read_html(url) %>% 
+        html_nodes("#main > div.teams > table:nth-child(6)") %>% 
+        html_table()
+        }
+
+# sanity check
+salary_scrape(2017, "tackle")
+
+
+```
+
+## Build up inputs as scaffold
+
+* years (2011 - 2018)
+* position (qb, rb, wr, tackle, linebacker, safety, etc)
+
+
+```{r}
+# 8 years
+years <- 2011:2018
+
+# 10 positions 
+positions <- c("quarterback", "running-back", "tackle", "tight-end", "wide-receiver", "defensive-end","cornerback","defensive-tackle", "linebacker", "safety")
+
+scaffold <- tibble(year = years,
+                   position = list(positions)) %>% tidyr::unnest()
+scaffold
+```
+
+
+## Test out the inputs
+
+```{r}
+salary_scrape(2011, "linebacker")
+```
+
+## Now to use the scaffold to build a dataframe
+
+```{r}
+# limit to first four rows of our scaffold dataframe
+head(scaffold, 4)
+
+# create df with map2
+tbl_data <- head(scaffold, 4) %>% 
+  mutate(data = purrr::map2(year, position, ~salary_scrape(.x, .y)))
+
+# check the data
+tbl_data
+
+# look at the nested dataframe contents
+tbl_data$data 
+
+# remove the NA column and merge into a continuous dataframe
+tbl_data$data %>% purrr::flatten_df()
+```
+
+
+## Rebuild our function
+* Goal is to move table data into data column
+* But we need to flatten this data into a combined dataframe
+* Also know that dataframes will end up nested
+
+```{r}
+#original function
+salary_scrape <- function(year, position) {
+    
+    url <- glue("http://www.spotrac.com/nfl/positional/{year}/{position}")
+    
+    read_html(url) %>% 
+        html_nodes("#main > div.teams > table:nth-child(6)") %>% 
+        html_table()
+        }
+
+
+# Function to scrape the top avg cap salary by player ----
+salary_scrape <- function(year, position) {
+    
+    Sys.sleep(3)
+  
+    cat(".")
+    
+    url <- glue("http://www.spotrac.com/nfl/positional/{year}/{position}")
+    
+    read_html(url) %>% 
+        html_nodes("#main > div.teams > table:nth-child(6)") %>% 
+        html_table() %>%
+        purrr::flatten_df() %>% 
+        set_names(c("rank","player","cap_dollars", "cap_percent"))
+}
+
+
+
+
+
+# run this, because it will take a while!
+scraped_df <- scaffold %>% 
+    mutate(data = map2(year, position, ~salary_scrape(.x, .y))) 
+
+
+# lets look!
+scraped_df
+```
+
+## Data cleanup
+
+```{r}
+position_group_df <- scraped_df %>% 
+    unnest() %>% 
+    mutate_at(c("cap_dollars", "cap_percent"), readr::parse_number) %>%
+    mutate(position_group = dplyr::case_when(position %in% 
+                                     c("quarterback", "running-back", "tackle", 
+                                       "tight-end","wide-receiver") ~ "Offense",
+                            TRUE ~ "Defense"))
+```
+
+## SAVE THE DATA! 
+
+```{r}
+ # Save it to avoid re-scraping 
+saveRDS(position_group_df, file = "position_cap_data.RDS")
+```
+
+## Arrange data for plotting
+
+```{r}
+# Make dataframe for the plot
+mean_pay_df <- position_group_df %>% 
+  group_by(year, position, position_group) %>% 
+  top_n(16, cap_dollars) %>% 
+  summarize(avg_pay_millions = mean(cap_dollars)/1000000)
+
+mean_pay_df
+```
+## Plot of average salary
+
+```{r}
+ggplot(mean_pay_df, aes(x = year, y = avg_pay_millions, group = position, color = position)) +
+  geom_line() +
+  geom_point()  +
+  facet_wrap(~position_group, ncol = 2) +
+  ylim(0, 25)
+```
+
+
+## Create dataframe for original plot
+
+```{r}
+top16_pay_df <- position_group_df %>% 
+  group_by(year, position, position_group) %>% 
+  top_n(16, cap_dollars) %>% 
+  ungroup() %>% 
+  mutate(cap_dollars = cap_dollars/1000000,
+         position = factor(toupper(position), levels = 
+                  c("RUNNING-BACK", "QUARTERBACK", "TACKLE", "WIDE-RECEIVER", "TIGHT-END",
+                    "DEFENSIVE-END", "DEFENSIVE-TACKLE", "LINEBACKER", "CORNERBACK", "SAFETY")))
+```
+
+
+# Create and save the plot!
+
+```{r}
+(g1 <- ggplot(top16_pay_df, aes(x = year, y = cap_dollars, group = position)) +
+  geom_point(alpha = .3, size = 3) +
+  geom_smooth(color = "orangered",
+              se = FALSE) +
+  scale_y_continuous(limits = c(-1, 30), 
+                     breaks = seq(0, 30, 5),
+                     labels = c("0", "5", "10", "15", "20", "25", "$30m")) +
+  facet_wrap(~ position, ncol = 5) +
+
+  labs(title = "The average pay for top running backs has stalled", 
+       subtitle = "Average cap value of 16 highest-paid players in each position",
+       y = "Average Cap Value (Millions)", x = "Year",
+       caption = "\nGraphic: @thomas_mock | Data: spotrac.com") +
+  ggthemes::theme_fivethirtyeight())
+
+ggsave("nfl_avg_pay.png", g1, height = 8, width = 10, units = "in", dpi = 600)
+beepr::beep(4)
+```
+
+
