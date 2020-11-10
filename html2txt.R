@@ -2,34 +2,35 @@
 
 text = gettxt("https://CRAN.R-project.org/package=htm2txt")
 text = gettxt("http://www.unirio.br/")
+cat(text)
+
+paste(text,sep = "\n")
+strsplit(text, "\n")[[1]]
+browse("http://www.unirio.br/")
 
 text = htm2txt("<html><body>html texts</body></html>")
 text = htm2txt(c("Hello<p>World", "Goodbye<br>Friends"))
 text = htm2txt("<p>Menu:</p><ul></li>Coffee</li><li>Tea</li></ul>", list = "\n- ")
 text = htm2txt("Page 1<hr>Page 2", pagebreak = "\n\n[NEW PAGE]\n\n")
 
+
+
+
+
+
 ####################################
 # R htm2txt package Ver 2.1.2      #
 #                 by Sangchul Park #
 ####################################
-
 #' Convert a html document to simple plain texts by removing all html tags
-#'
-#' param htm A character vector, containing a html document, to be converted into plain texts (other objects are coerced into character vectors).
-#' param list A character that replaces a <li>...</li> tag (referring to a numbering or bullet for lists). The default is "\n&#8226; ", which indicates a line change followed by a bullet character and a space.
-#' param pagebreak A character that replaces a <hr> tag (referring to a thematic change in the content or a page break).
-#' return A character vector containing plain texts converted from the html document.
-
 
 htm2txt <- function(htm, list = "\n&#8226; ", pagebreak = "\n\n----------\n\n") {
-  
   # function gsubfun: work like gsubfn::gsubfn, but does not damage unicodes
   gsubfun <- function(x, pattern, FUN) {
     match = lapply(regmatches(x, gregexpr(pattern, x)), function(y) if (length(y) == 0) return(y) else return(sapply(y, FUN)))
     nonmatch = regmatches(x, gregexpr(pattern, x), invert = TRUE)
     return(sapply(seq_along(match), function(i) if (length(.subset2(match, i)) == 0) return(x[i]) else return(paste(append(.subset2(nonmatch, i)[1], sapply(seq_along(.subset2(match, i)), function(j) paste(.subset2(match, i)[j], .subset2(nonmatch, i)[j + 1], sep = ''))), collapse = ''))))
   }
-  
   # htm2txt main codes
   htm = as.vector(unlist(htm))
   htm = gsub('<style( [^>]*)?>(.*?)</style( [^>]*)?>|<script( [^>]*)?>(.*?)</script( [^>]*)?>|<title( [^>]*)?>(.*?)</title( [^>]*)?>|<!--(.*?)-->', '', htm)
@@ -76,21 +77,8 @@ htm2txt <- function(htm, list = "\n&#8226; ", pagebreak = "\n\n----------\n\n") 
 }
 
 #' Extract simple plain texts from a web page at a certain URL
-#'
-#' @param URL A character indicating the URL of a web page.
-#' @param encoding Encoding method (e.g., "UTF-8", "latin1", "bytes", "unknown", etc.).
-#' @param ... Other \code{\link{htm2txt}} arguments.
-#' @return A character containing plain texts converted from the htm document at the URL.
-#' @examples
-#' text = gettxt("https://CRAN.R-project.org/package=htm2txt")
-#' @export
+
 gettxt <- function(URL, encoding = "UTF-8", ...) return(htm2txt(paste(readLines(URL, warn = FALSE, encoding = encoding), sep = '', collapse = ' '), ...))
 
 #' Display simple plain texts in a web page at a certain URL
-#'
-#' @param URL A character indicating the URL of a web page.
-#' @param ... Other \code{\link{gettxt}} arguments.
-#' @return None (invisible NULL).
-#' @examples browse("https://CRAN.R-project.org/package=htm2txt")
-#' @export
 browse <- function(URL, ...) cat(gettxt(URL, ...))
